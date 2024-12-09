@@ -1,12 +1,19 @@
-The OAuth2 flow requires a redirect for login. Multiple redirects in a row will cause issues for the application as it becomes difficult to maintain state. This is required though when notifying the user of the access it will provide (see [Considerations for Scope Consent](https://www.hl7.org/fhir/smart-app-launch/best-practices.html#considerations-for-scope-consent). This can not be avoided when the application is not controlled by the same organization.
+The section enables applications to obtain authorization from multiple systems while maintaining appropriate user consent and security controls. It builds on existing SMART App Launch flows, executing them sequentially with contextual information passed between authorization requests.
 
-In this section we explore the use case where it is required when the user has to provide permission to access the content in secure manner.
+### Key Characteristics
 
-The approach taken in this flow is the same as a normal SMART launch, but couples several of these back-to-back. The advantage of the approach is that it does not compromise the SMART on FHIR approach and requires little to no additional specification. The disadvantage is that it requires multiple redirects with state maintained between them.
+- Preserves the security properties of SMART App Launch
+- Maintains distinct authorization grants for each system
+- Enables automated authentication when supported
+- Preserves patient context across authorization requests
+- Requires no protocol extensions beyond standard SMART, OAuth 2.0, and OpenID Connect parameters
 
-The patient context of the first launch is passed when performing the first SMART launch, triggered by the launch token. This information needs to be passed to the second launch. This requires alignment between the different authorization systems. In a way this is similar to the token exchange approach where a similar alignment is required. This is only required when patient specific scopes are used.
+### Core Components
 
-This is achieved by generating a `launch-token` in the EHR flow. This will be used as the `launchId` in the second flow.
+1. **Initial Authorization**: Application obtains authorization from the EHR system using standard SMART App Launch
+2. **Context Preservation**: EHR-supplied context (patient ID, user identity) is preserved for subsequent authorization
+3. **Secondary Authorization**: Application initiates authorization with imaging system using preserved context
+4. **Token Issuance**: Each system issues distinct access tokens for their respective resources
 
 #### Discovery 
  
