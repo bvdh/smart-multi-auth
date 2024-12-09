@@ -1,0 +1,86 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+create App
+User -> App: launch
+activate App
+
+=== Discovery ==
+App -> EhrFHIR ++: <iss>/.wellknown/smart-configuration
+App <-- EhrFHIR --: <configuration>
+note left
+    auth-endpoint: <a1>
+    token-endpoint: <t1>
+    capability:[ `auth-multi-aud-token`]
+    user_access_brand_endpoint: <uabe>
+    user_access_brand_identifier: <uabi>
+end note
+App -> BrandProvider: retrieve brand bundle
+note left 
+    determine Endpoint of 
+    other server
+end note
+App -> App: determine other endpoints
+note left: <iss1> and <iss2>
+App -> OtherFHIR ++: <otherFhir>/.wellknown/smart-configuration
+App <-- OtherFHIR --: <configuration>
+note left
+    auth-endpoint: <a1>
+    token-endpoint: <t1>
+    capability:[ `auth-multi-aud-token`]
+    user_access_brand_endpoint: <uabe>
+    user_access_brand_identifier: <uabi>
+end note
+App -> App: detect OtherFhir supports reuse access-token.
+
+=== Request EHR Authorization code ==
+EhrAS <- App --: OPEN authorize
+    activate EhrAS
+    note right
+        response_type: code
+        aud: iss1
+        aud: iss2
+    end note
+    group login required
+        note over EhrAS: login
+        User -\ EhrAS: login
+    
+        note over EhrAS: show scopes
+        User -\ EhrAS: approve scopes
+end
+App <- EhrAS --: REDIRECT <auth-token>
+activate App
+
+=== Request EHR Access token ==
+App -> EhrAS ++: retrieve-token( <auth-token> )
+App <-- EhrAS --: <ehr-token-response>
+note left
+    ehr-token-response:
+        <ehr-access-token>
+        <ehr-open-id-token> (with patient)
+        <ehr-patient-id>
+        <ehr-practitioner-id>
+end note
+
+=== Access content EHR ==
+App -> EhrFHIR: GET content [ehr-access-token]
+
+=== Access content Other ==
+note over OtherFHIR
+    Patient present with same id or 
+    fullURL to EHR
+end note
+App -> OtherFHIR: GET content [ehr-access-token]
+
+@enduml

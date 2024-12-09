@@ -1,0 +1,50 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+create App
+User -> App: launch
+activate App
+
+=== Discovery ==
+App -> EhrFHIR ++: <iss>/.wellknown/smart-configuration
+App <-- EhrFHIR --: <configuration>
+note left
+    auth-endpoint: <a1>
+    token-endpoint: <t1>
+    user_access_brand_endpoint: <uabe>
+    user_access_brand_identifier: <uabi>
+    associated_endpoints: [ 
+        url: <iss>, 
+        capabilities[`token-exchange-launchtoken`]
+    ]
+end note
+
+note left of App: <iss1> and <iss2>
+
+App -> OtherFHIR ++: <otherFhir>/.wellknown/smart-configuration
+App <-- OtherFHIR --: <configuration>
+note left
+    auth-endpoint: <a2>
+    token-endpoint: <t2>
+    grant_types:[.., urn:ietf:params:oauth:grant-type:token-exchange]
+    capability:[ `token-exchange-openid`]
+    associated_endpoints: [ 
+        url: <iss1>/.wellknown/smart-configuration, 
+        capabilities[`token-exchange-launchtoken`]
+    ]
+end note
+App -> App: detect OtherFhir supports token-exchange\nand EHR can be used.
+
+
+@enduml

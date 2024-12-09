@@ -1,0 +1,52 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+create App
+User -> App: launch
+activate App
+
+=== Discovery ==
+App -> EhrFHIR ++: <iss>/.wellknown/smart-configuration
+App <-- EhrFHIR --: <configuration>
+note left
+    auth-endpoint: <ehr-a1>
+    token-endpoint: <ehr-t1>
+    user_access_brand_endpoint: <uabe>
+    user_access_brand_identifier: <uabi>
+    associated_endpoints:{
+        {   url: <iss-imaging>, capabilities: ["smart-imaging-access"]
+        }
+    }
+end note
+
+alt
+else associated_endpoints
+else user_access_brands
+    App -> BrandProvider: retrieve brand bundle
+    note left 
+        determine Endpoint of 
+        other server
+    end note
+    App -> App: determine other endpoints
+    note left: <iss> and <iss-imaging>
+end
+
+App -> OtherFHIR ++: <iss-imaging>/.wellknown/smart-configuration
+App <-- OtherFHIR --: <configuration>
+note left
+    auth-endpoint: <other-a2>
+    token-endpoint: <other-t2>
+end note
+
+@enduml

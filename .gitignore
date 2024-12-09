@@ -1,0 +1,15 @@
+# Mac
+*.DS_STORE
+
+# python
+env/
+
+# idea
+.idea/
+
+# FHIR publisher 
+input-cache/
+temp/
+fsh-generated/
+template/
+output/

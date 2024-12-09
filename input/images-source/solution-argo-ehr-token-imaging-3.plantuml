@@ -1,0 +1,48 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Imaging\nFHIR" as OtherFHIR
+    participant  "Imaging\nAS" as OtherAS
+end box
+
+======= User approves access ==
+
+    note over OtherAS
+        show studies and request access
+    end note
+
+    note over OtherAS: create <imaging-auth-token>
+    
+
+App <- OtherAS --: REDIRECT <imaging-auth-token> <state>
+deactivate OtherAS
+activate App
+
+=== restore state ==
+
+App -> App: restore state
+note left
+ <ehr-access-token> and 
+ user and patient id known
+end note
+
+=== Request Imaging Access token ==
+
+App -> OtherAS ++: retrieve-token <imaging-auth-token>
+App <-- OtherAS --: <imaging-token-response>
+note left
+    token-response:
+        <imaging-access-token>
+        <imaging-patient>
+        <imaging-user>
+end note
+
+
+
+@enduml

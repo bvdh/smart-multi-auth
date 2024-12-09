@@ -1,0 +1,77 @@
+actor User
+participant "Vendor\nApp" as VendorApp
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+create VendorApp
+User -> VendorApp: launch
+activate VendorApp
+VendorApp -> EhrFHIR: discover
+
+group Discovery
+    VendorApp -> EhrFHIR ++: <iss>/.wellknown/smart-configuration
+    VendorApp <-- EhrFHIR --: <configuration>
+    note left
+        <auth-endpoint>
+        <token-endpoint>
+        <user_access_brand_endpoint>
+        <user_access_brand_identifier>
+    end note
+end
+
+group Authentication
+    VendorApp -> EhrAS ++: authorize
+    VendorApp <-- EhrAS --: REDIRECT
+    VendorApp -> EhrAS --  : REDIRECT
+        activate EhrAS
+        User -> EhrAS: login
+        EhrAS -> VendorApp --: REDIRECT <auth-token>
+        activate VendorApp
+end
+
+group authorization
+    VendorApp -> EhrAS ++: retrieve-token( <auth-token> )
+    VendorApp <-- EhrAS --: <ehr-token-response>
+    note left
+        ehr-token-response:
+          <ehr-access-token>
+          <ehr-open-id-token> (with patient)
+          <ehr-patient-id>
+          <ehr-practitioner-id>
+    end note
+end
+
+group authorization 2
+    VendorApp -> BrandProvider: retrieve brand bundle
+    note left 
+        determine Endpoint of 
+        other server
+    end note
+    VendorApp -> OtherFHIR: <otherFhir>/.wellknown/smart-configuration
+    VendorApp -> OtherAS ++: retrieve-token( <ehr-open-id-token> )
+        OtherAS -> EhrAS ++: request backend token
+        OtherAS <-- EhrAS --: <ehr-backend-token>
+        OtherAS -> EhrAS ++: introspect <ehr-open-id-token>\n[ehr-backend-token]
+        OtherAS <-- EhrAS--: ok, token content
+        note right 
+            contains ehr-patient-id
+        end note
+        OtherAS -> EhrFHIR: determine local Practitioner based on open-id token
+        OtherAS -> EhrFHIR: determine local Patient based on <ehr-patient-id>ll
+        OtherAS -> OtherFHIR: locate equivalent\nPatient and Practitioner
+        OtherAS -> OtherAS: determine scopes
+    VendorApp <-- OtherAS --: <other-token-response>
+    note left
+        other-token-response:
+          <other-access-token>
+          <other-patient-id>
+          <other-practitioner-id>
+    end note
+end

@@ -1,0 +1,51 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+create App
+User -> App: launch
+activate App
+
+=== Request EHR Openid and Access token EHR ==
+App -> EhrAS ++: retrieve-token( <auth-token> )
+App <-- EhrAS --: <ehr-token-response>
+note left
+    token-response:
+        <ehr-access-token>
+        <ehr-launch-token> (with patient)
+        <ehr-patient-id>
+        <ehr-practitioner-id>
+end note
+
+=== Request Other Access token ==
+App -> OtherAS ++: retrieve-token( <launch-token> )
+note right
+    clientId: <other-clientid>
+    grant_type = urn:ietf:params:oauth:grant-type:token-exchange
+    subject_token = <launch-token>
+    subject_token_type= urn:ietf:params:oauth:token-type:id_token
+end note
+OtherAS ->  EhrAS ++: introspect <launch-token> [backend-token]
+OtherAS <-- EhrAS --
+note right: <patient-id> <user>
+OtherAS -> EhrAS: GET patient [backend-token]
+OtherAS -> EhrAS: GET user [backend-token]
+OtherAS -> OtherFHIR: determine matching patient 
+OtherAS -> OtherFHIR: determine matching user
+App <-- OtherAS --: <ehr-token-response>
+note left
+    token-response:
+        <other-access-token>
+end note
+
+@enduml

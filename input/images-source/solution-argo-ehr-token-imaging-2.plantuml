@@ -1,0 +1,36 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Imaging\nFHIR" as OtherFHIR
+    participant  "Imaging\nAS" as OtherAS
+end box
+
+======= Determine local scope ==
+    note over OtherAS
+        determine local patient-id and user-id
+    end note
+    OtherAS -> EhrFHIR: GET Patient/<patient-id> {ehr-access-token}
+    OtherAS -> EhrFHIR: GET <user-id> {ehr-access-token}
+
+    OtherAS -> OtherFHIR: determine local patient
+    OtherAS -> OtherFHIR: determine local user
+
+    note over OtherAS
+        local patient and user known
+    end note
+
+    OtherAS -> EhrAS: GET ImagingStudy?patient=<patient-id> {ehr-access-token}
+
+    note over OtherAS
+        List of studies the user may access
+        is known.
+    end note
+
+
+@enduml

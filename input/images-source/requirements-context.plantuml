@@ -1,0 +1,17 @@
+@startuml
+component "App" as App
+
+package EHR {
+    component "EHR Authorization Server" as EHRAS
+    component "EHR FHIR Server" as EHRFHIR
+}
+package Other {
+    component "Other Authorization Server" as OtherAS
+    component "Other FHIR Server" as OtherFHIR
+}
+
+App -down-> EHRFHIR
+App -down-> EHRAS
+App -down-> OtherAS
+App -down-> OtherFHIR
+@enduml

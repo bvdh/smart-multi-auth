@@ -1,0 +1,25 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+=== Request EHR Openid and Access token EHR ==
+App -> EhrAS ++: retrieve-token( <auth-token> )
+App <-- EhrAS --: <ehr-token-response>
+note left
+    token-response:
+        <ehr-access-token>
+        <ehr-patient-id>
+        <ehr-practitioner-id>
+end note
+
+@enduml

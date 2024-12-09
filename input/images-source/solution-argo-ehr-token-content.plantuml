@@ -1,0 +1,32 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+
+=== Access content EHR ==
+App -> EhrFHIR: GET content [ehr-access-token]
+
+=== Access content Other ==
+note over OtherFHIR
+    Patient present with same id or 
+    fullURL to EHR
+end note
+App -> OtherFHIR++: GET content [imaging-access-token]
+alt 
+else access is coded in token
+else check if access is allowed
+    OtherFHIR -> EhrFHIR: GET content [ehr-access-token]
+end
+App <-- OtherFHIR--: <content>
+
+@enduml

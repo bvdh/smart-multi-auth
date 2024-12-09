@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<specification xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ciUrl="" defaultVersion="current" defaultWorkgroup="" url="http://hl7.org/fhir/uv/smart-multi-server-auth">
+<version code="current" url=""/>
+<artifactPageExtension value="-definitions"/>
+<artifactPageExtension value="-examples"/>
+<artifactPageExtension value="-mappings"/>
+<artifact id="CodeSystem/smart-auth-information-CodeSystem" key="CodeSystem-smart-auth-information-CodeSystem" name="Codes for SMART authorization"/>
+<artifact id="Endpoint/EpicSandboxEndpoint" key="Endpoint-EpicSandboxEndpoint" name="EpicSandboxEndpoint"/>
+<artifact id="Organization/EpicSandboxOrganization" key="Organization-EpicSandboxOrganization" name="EpicSandboxOrganization"/>
+<artifact id="ValueSet/smart-grant-types" key="ValueSet-smart-grant-types" name="Grant types supported by SMART-on-FHIR"/>
+<artifact id="Endpoint/ImagingSandboxEndpoint" key="Endpoint-ImagingSandboxEndpoint" name="ImagingSandboxEndpoint"/>
+<artifact id="Organization/ImagingSandboxOrganization" key="Organization-ImagingSandboxOrganization" name="ImagingSandboxOrganization"/>
+<artifact id="StructureDefinition/MyPatient" key="StructureDefinition-MyPatient" name="MyPatient"/>
+<artifact id="StructureDefinition/extended-smart-launch-conformance" key="StructureDefinition-extended-smart-launch-conformance" name="New SMART launch conformance definition"/>
+<artifact id="Patient/PatientExample" key="Patient-PatientExample" name="PatientExample"/>
+<artifact id="StructureDefinition/smart-launch-conformance-original" key="StructureDefinition-smart-launch-conformance-original" name="SMART launch conformance definition"/>
+<artifact id="ValueSet/SmartCapabilities" key="ValueSet-SmartCapabilities" name="Smart Capabilities"/>
+<artifact id="ValueSet/smart-token-endpoint-auth-methods" key="ValueSet-smart-token-endpoint-auth-methods" name="Smart Token Endpoint Auth Methods supported by SMART-on-FHIR"/>
+<artifact id="ValueSet/SmartEndpointCapabilities" key="ValueSet-SmartEndpointCapabilities" name="Smart associated_endpoints capabilities"/>
+<artifact id="Bundle/UserBrandBundleExample" key="Bundle-UserBrandBundleExample" name="UserBrandBundleExample"/>
+<page key="NA" name="(NA)"/>
+<page key="many" name="(many)"/>
+<page key="artifacts" name="Artifacts Summary"/>
+<page key="design-choices" name="Design choices"/>
+<page key="solution-dual-smart-launch" name="Dual SMART app launch"/>
+<page key="SMART-feedback" name="Feedback on SMART launch"/>
+<page key="index" name="Multi Server Authentication"/>
+<page key="references" name="References"/>
+<page key="requirements" name="Requirements"/>
+<page key="solution-reuse-access-token" name="Reuse Access Token"/>
+<page key="specification" name="Specification"/>
+<page key="toc" name="Table of Contents"/>
+<page key="solution-token-exchange" name="Token exchange"/>
+</specification>

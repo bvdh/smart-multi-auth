@@ -1,0 +1,55 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Imaging\nFHIR" as OtherFHIR
+    participant  "Imaging\nAS" as OtherAS
+end box
+
+=== Store state ===
+
+activate App
+App -> App: create state value 
+
+=== Request Imaging Authorization code ==
+
+OtherAS <- App --: OPEN authorize id_token_hint=<id-token>
+    activate OtherAS
+
+======= Check client ==
+
+    OtherAS -> EhrAS: GET <ehr>/clients 
+    note over EhrAS: where is this signalled?
+    note over OtherAS: check request JWT of client (if used)
+
+
+======= Request EHR token ==
+    OtherAS -> EhrAS: REDIRECT authorize 
+    note right of OtherAS 
+        id_token_hint=<id-token> 
+        prompt=none
+        scoped = ["launch/patient", ...]
+    end note  
+    deactivate OtherAS
+    activate EhrAS
+    EhrAS -> OtherAS: REDIRECT <ehr-auth-token>
+    deactivate EhrAS
+    activate OtherAS
+    OtherAS -> EhrAS++: retrieve access token
+    OtherAS <-- EhrAS--: <token-response>
+    note right of OtherAS
+     token-response: 
+       <ehr-access-token> 
+       <new-id-token>
+       <patient-id>
+       <user-id>
+    end note
+
+
+
+@enduml

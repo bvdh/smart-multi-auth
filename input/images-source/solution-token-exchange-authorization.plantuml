@@ -1,0 +1,30 @@
+@startuml
+
+actor User
+participant "App" as App
+box EHR
+    participant  "EHR\nFHIR" as EhrFHIR
+    participant  "EHR\nAS" as EhrAS
+end box
+box Other
+    participant  "Other\nFHIR" as OtherFHIR
+    participant  "Other\nAS" as OtherAS
+end box
+participant  "Brand\nProvider" as BrandProvider
+
+=== Request EHR Authorization code ==
+EhrAS <- App --: OPEN authorize
+    note right
+     scope: [ .., launch-token, open-id, fhiruser, ...]
+     clientId: <ehr-clientid>
+    end note
+    activate EhrAS
+    group login required
+        note over EhrAS: login
+        User -\ EhrAS: login
+end
+App <- EhrAS --: REDIRECT <auth-token>
+activate App
+
+
+@enduml
