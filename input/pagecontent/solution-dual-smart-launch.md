@@ -15,81 +15,101 @@ The section enables applications to obtain authorization from multiple systems w
 3. **Secondary Authorization**: Application initiates authorization with imaging system using preserved context
 4. **Token Issuance**: Each system issues distinct access tokens for their respective resources
 
-#### Discovery 
- 
-The first step in the flow is discovery.
+### Application Discovers Imaging Endpoints from EHR
 
-<figure>
-  {% include solution-argo-ehr-token-discovery.svg %}
-</figure>
+The Application retrieves the EHR's SMART configuration from `[ehrFhirBaseUrl]/.well-known/smart-configuration`. The imaging server URL `[imagingServerFhirBaseUrl]` is discovered through the `associated_endpoints` array.
 
-The Application retrieves the conformance information from the EHR-FHIR server (`iss`). Based on the `associated_endpoints`, the imaging server url `iss-imaging` is located. Alternatively the user_brand_endpoint can be used to discover the other server(s) it wants to access (`iss-imaging`). 
+Servers that want to advertise associated endpoints supporting Dual SMART Launch will include the "smart-dual-launch" capability in the associated endpoint's capabilities array:
 
-The fact that `iss-imaging` support the launch-token approach is signalled by the `smart-imaging-access` capability.
+```json
+{
+  "capabilities": [...],
+  "associated_endpoints": [{
+    "url": "[imagingServerFhirBaseUrl]",
+    "capabilities": ["smart-dual-launch"]
+  }]
+}
+```
 
-{% include infonote.html text='Note we might want to change the name `smart-imaging-access` to something more neutral.
-' %}
+Next, the application retrieves the SMART configuration from `[imagingServerFhirBaseUrl]/.well-known/smart-configuration`. This configuration generally would not include `associated_endpoints`. The configuration's capabilities array MUST include "smart-dual-launch" to indicate support for receiving an OpenID Connect `id_token` as a `login_hint`.
 
-Next, the application retrieves the conformance information of `iss-imaging`. This conformance statement does not include a `associated_endpoint` field as there is no option to use this authorization server with the EHR.
+### Application Obtains Authorization from EHR 
 
-{% include infonote.html text='Note we might want to change define a capability for indicating the endpoints whose authorization server can be used for smart-imaging-access.
-' %}
+The application initiates a SMART App Launch flow with the EHR, requesting authorization including the `openid` and `fhirUser` scopes to ensure receipt of an OpenID Connect `id_token`. This follows the standard SMART App Launch specification process for obtaining an authorization code.
 
+### Application Exchanges Authorization Code for Access Token from EHR
 
-#### Retrieve EHR Authorization token and Access token
+The application exchanges its authorization code for an Access Token Response that includes:
+- An access token for accessing EHR resources
+- An OpenID Connect `id_token` as requested via the scopes
 
-Next, the application retrieves an authorization token and access-token from the EHR.
+### Application Preserves Authorization State
 
-<figure>
-  {% include solution-argo-ehr-token-ehr.svg %}
-</figure>
+Before initiating authorization with the imaging server, the application must preserve its current authorization state. This includes:
 
-The application retrieves an authorization code as is specified by [SMART app launch](https://www.hl7.org/fhir/smart-app-launch/app-launch.html#obtain-authorization-code).
+- The EHR's access token
+- The EHR's OpenID Connect `id_token` 
+- Current application state and context
 
-The response includes an `open-id` token as requested.
+The application may store this state either client-side (e.g., browser `sessionStorage`) or server-side. The specific storage mechanism is implementation-dependent but must ensure appropriate security controls.
 
-#### Retrieve Imaging Authorization token and Access token
+### Imaging Server Verifies Client Registration with EHR
 
-Next, the application retrieves an authorization token and access-token from the imaging server. 
+The imaging server MUST verify the requesting client's credentials by retrieving the client's registration details from the EHR's client discovery endpoint. The EHR MUST make its client discovery endpoint location available out of band to the imaging server.
 
-First it has to ensure that the current state (application state, tokens) can be retrieved after the SMART launch against the second server.
+The imaging server:
+1. Retrieves client metadata from `[ehrClientDiscoveryEndpoint]/clients/[clientId]`
+2. Validates the client type and authentication method:
+   * For public clients: validates only the `redirect_uri`
+   * For confidential clients using asymmetric authentication: retrieves the JWKS or JWKS URI for validating signatures during the token exchange
+   * All other client types MUST be rejected
 
-The way to do this is outside the scope of this specifications, options include: storing it on a server, storing it encrypted in session-storage, ... . Optionally all, or part of the state can be passed as the `state` in the authorization step.
+NOTES:
+* Only public clients and asymmetric-authenticated confidential clients are eligible for dual SMART launch
+* Client credentials and other symmetric authentication methods are not supported
 
-<figure>
-  {% include solution-argo-ehr-token-imaging-1.svg %}
-</figure>
+### Application Obtains Authorization from Imaging Server
 
-Based on the open-id token, the iss of the authorization server is determined. The clients endpoint of the EHR AS is used to retrieve information the authorized clients and the client requesting access is verified.
+The application initiates a SMART on FHIR standalone launch request to the imaging server's authorize endpoint. This request includes:
+- The OpenID Connect `id_token` (from the EHR) in the `login_hint` parameter
+- Required scopes for imaging access
 
-The application retrieves an `ehr-access token` and `new-id-token` as is specified by [SMART app launch](https://www.hl7.org/fhir/smart-app-launch/app-launch.html#obtain-authorization-code). The `open-id` token retrieved in the previous step is used as `token-hint` and with a `prompt` set to `none` (see https://openid.net/specs/openid-connect-core-1_0.html).
+### Imaging Server Authenticates User and Obtains Authorization from EHR (Embedded Workflow, No User-visible Steps)
 
-<figure>
-  {% include solution-argo-ehr-token-imaging-2.svg %}
-</figure>
+The imaging server initiates an authorization request to the EHR's authorization endpoint with:
+- The EHR's OpenID Connect `id_token` passed in the `id_token_hint` parameter
+- `prompt=none` to request automated authentication
+- Scopes requesting access to relevant patient and imaging study data
 
-Using the `ehr-access-token`, the Imaging AS retrieves information on the current patient, user and the ImagingStudies this user is allowed to access from the EHR. This allows for the model where the EHR retains this information and the Imaging Server depends on it.
+The EHR processes this request and, if valid:
+1. Validates the `id_token_hint`
+2. Automatically issues a new Access Token Response containing:
+   - An access token for the imaging server to access relevant FHIR resources
+   - A new OpenID Connect `id_token`
+   - The current patient context
 
-{% include infonote.html text='We may want to generalize this a bit further and define some sort of signalling that would allow the Imaging Server to detect what resources to check. ' %}
+### Imaging Server Obtains User Authorization
 
-<figure>
-  {% include solution-argo-ehr-token-imaging-3.svg %}
-</figure>
+The imaging server MUST present an authorization screen to the user asking if they want to authorize the supplied client to access imaging data. This divides authorization decision-making between:
+* The EHR (for clinical access authorization)
+* The imaging server (for imaging access authorization)
 
-Using the information retrieved from EHR, the Imaging AS presents a list of authorizations to the user and asks whether the application should be granted access to this information.
+### Imaging Server Enforces Authorization Policy
 
-If the user agrees, an `imaging-auth-token` is generated.
+The imaging server has multiple options for implementing its authorization policy:
 
-The application restores the state and retrieves the ehr access token and context.
+1. **Independent Policy**: The imaging server can implement its own access policy based on the patient and user context received from the EHR
 
-Using the `imaging-auth-token` the application can retrieve an `imaging-token-response` that contains an access token for the Imaging Server as well the patient and user id on the Imaging Server.
+2. **EHR-Integrated Policy**: If the EHR hosts ImagingStudy FHIR resources, the imaging server can gate access based on which studies are visible using the EHR-provided access token. This allows for shared enforcement of access rules between the systems.
 
-#### Access content
+### Application Exchanges Authorization Code for Access Token from Imaging Server
 
-Using the access-tokens, the content on both servers can be accessed.
+After user approval, the application exchanges its authorization code for an Access Token Response from the imaging server. This token grants access specifically to the approved imaging resources.
 
-<figure>
-  {% include solution-argo-ehr-token-content.svg %}
-</figure>
+### Application Accesses Resources from Both Systems
 
-When accessing the imaging information the Imaging FHIR server will determine what content can be accessed. The information to do is can be coded in the token are determined by accessing EHR.
+The client application can now access:
+1. EHR resources using the EHR-issued access token
+2. Imaging resources using the imaging server-issued access token
+
+Each system maintains independent access control and token validation.
