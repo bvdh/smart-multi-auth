@@ -19,19 +19,19 @@ The section enables applications to obtain authorization from multiple systems w
 
 The Application retrieves the EHR's SMART configuration from `[ehrFhirBaseUrl]/.well-known/smart-configuration`. The imaging server URL `[imagingServerFhirBaseUrl]` is discovered through the `associated_endpoints` array.
 
-Servers that want to advertise associated endpoints supporting Dual SMART Launch will include the "smart-dual-launch" capability in the associated endpoint's capabilities array:
+Servers that want to advertise associated endpoints supporting Dual SMART Launch will include the "smart-imaging-access-dual-launch" capability in the associated endpoint's capabilities array:
 
 ```json
 {
   "capabilities": [...],
   "associated_endpoints": [{
     "url": "[imagingServerFhirBaseUrl]",
-    "capabilities": ["smart-dual-launch"]
+    "capabilities": ["smart-imaging-access-dual-launch"]
   }]
 }
 ```
 
-Next, the application retrieves the SMART configuration from `[imagingServerFhirBaseUrl]/.well-known/smart-configuration`. This configuration generally would not include `associated_endpoints`. The configuration's capabilities array MUST include "smart-dual-launch" to indicate support for receiving an OpenID Connect `id_token` as a `login_hint`.
+Next, the application retrieves the SMART configuration from `[imagingServerFhirBaseUrl]/.well-known/smart-configuration`. This configuration generally would not include `associated_endpoints`. The configuration's capabilities array MUST include "smart-imaging-access-dual-launch" to indicate support for receiving an OpenID Connect `id_token` as a `login_hint`.
 
 ### Application Obtains Authorization from EHR 
 
