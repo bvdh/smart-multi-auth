@@ -29,7 +29,7 @@ Prior to the technical flow the following will be done out-of-band:
 - The application is registered with the EHR.
 - The endpoint for the imaging system is configured in the EHR.
 - The EHR is configured to let the imaging system retrieve information about the application.
-- The imaging system determined an ID type in the EHR that it can use to uniquely identify a patient in the imaging system.
+- The imaging system determined an identifier type in the EHR that it can use to uniquely identify a patient in the imaging system.
 
 ## Technical Flow
 
