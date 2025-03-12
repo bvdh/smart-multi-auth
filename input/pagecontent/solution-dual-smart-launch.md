@@ -138,8 +138,6 @@ sequenceDiagram
     
     App->>Browser: Redirect to imaging server authorization endpoint
     Browser->>IS: Auth request with EHR id_token as login_hint
-    IS->>EHR: GET [ehrClientDiscoveryEndpoint]/clients/[clientId]
-    EHR-->>IS: Client metadata (client_name, JWKS, redirect_uri)
     IS->>Browser: Redirect to EHR authorize endpoint with id_token_hint & prompt=none
     Browser->>EHR: Authorization request with id_token_hint & prompt=none
     Note over Browser: Browser has session state for existing user session 
@@ -149,6 +147,11 @@ sequenceDiagram
     IS->>EHR: Exchange code for tokens
     EHR-->>IS: Issue id_token & access_token to IS 
     
+    alt If IS is not familiar with App
+    IS->>EHR: GET [ehrClientDiscoveryEndpoint]/clients/[clientId]
+    EHR-->>IS: Client metadata (client_name, auth method, redirect_uri, jwks)
+    end
+
     IS->>EHR: Get FHIR Patient resource
     EHR-->>IS: Return Patient resource
     IS->>IS: In Patient resource, find ID known by IS
