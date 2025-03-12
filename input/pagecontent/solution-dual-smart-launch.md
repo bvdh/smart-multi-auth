@@ -38,15 +38,15 @@ Prior to the technical flow the following will be done out-of-band:
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant App
+    participant App as Application
     participant EHR
-    participant ImagingServer
+    participant ImagingServer as Imaging Server
 
     Browser->>App: User initiates workflow
-    App->>EHR: Get .well-known/smart-configuration
-    EHR-->>App: Return configuration with associated_endpoints
-    App->>ImagingServer: Get .well-known/smart-configuration
-    ImagingServer-->>App: Return configuration with "smart-imaging-access-dual-launch"
+    App->>EHR: GET [ehrFhirBaseUrl]/.well-known/smart-configuration
+    EHR-->>App: Configuration with associated_endpoints & capabilities
+    App->>ImagingServer: GET [imagingServerFhirBaseUrl]/.well-known/smart-configuration
+    ImagingServer-->>App: Configuration with smart-imaging-access-dual-launch capability
 ```
 
 #### Narrative Explanation
@@ -83,9 +83,8 @@ It's important to note that at this stage, the application is simply discovering
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant App
+    participant App as Application
     participant EHR
-    participant ImagingServer
     
     App->>Browser: Redirect to EHR authorization endpoint
     Browser->>EHR: Authorization request with openid+fhirUser scopes
@@ -133,20 +132,21 @@ This phase follows standard SMART App Launch, but the request for OpenID scopes 
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant App
+    participant App as Application
     participant EHR
-    participant ImagingServer
+    participant ImagingServer as Imaging Server
     
     App->>Browser: Redirect to imaging server authorization endpoint
     Browser->>ImagingServer: Auth request with EHR id_token as login_hint
-    ImagingServer->>EHR: Verify client registration from ehrClientDiscoveryEndpoint
+    ImagingServer->>EHR: GET [ehrClientDiscoveryEndpoint]/clients/[clientId]
+    EHR-->>ImagingServer: Client metadata (client_name, JWKS, redirect_uri)
     ImagingServer->>Browser: Redirect to EHR authorize endpoint with id_token_hint & prompt=none
     Browser->>EHR: Authorization request with id_token_hint & prompt=none
     Note over Browser: Browser has session state for existing user session 
     EHR->>EHR: Verify that logged-in user matches user in id_token_hint
     EHR-->>Browser: Redirect to ImagingServer with authorization code
     Browser->>ImagingServer: Follow redirect back to ImagingServer, providing ImagingServer with authorization code
-    ImagingServer->>EHR: Exchange code for token
+    ImagingServer->>EHR: Exchange code for tokens
     EHR-->>ImagingServer: Issue id_token & access_token to ImagingServer 
     
     ImagingServer->>EHR: Get FHIR Patient resource
@@ -230,12 +230,12 @@ This phase elegantly solves the problem of requiring multiple authentications wh
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant App
+    participant App as Application
     participant EHR
-    participant ImagingServer
+    participant ImagingServer as Imaging Server
     
-    App->>EHR: Access clinical data with EHR access token
-    App->>ImagingServer: Access imaging data with ImagingServer access token
+    App->>EHR: Access clinical data using EHR access token
+    App->>ImagingServer: Access imaging data using ImagingServer access token
     App->>Browser: Display combined clinical and imaging data
 ```
 
