@@ -23,6 +23,14 @@ Dual SMART Launch enables an application to obtain authorization from multiple s
 4. **Token Issuance**: Each system issues distinct access tokens for their respective resources
 5. **Identifier Management**: Systems coordinate different patient identifiers across EHR and imaging contexts
 
+## Prerequisites
+
+Prior to the technical flow the following will be done out-of-band:
+- The application is registered with the EHR.
+- The endpoint for the imaging system is configured in the EHR.
+- The EHR is configured to let the imaging system retrieve information about the application.
+- The imaging system determined an ID type in the EHR that it can use to uniquely identify a patient in the imaging system.
+
 ## Technical Flow
 
 ### Phase 1: Endpoint Discovery
