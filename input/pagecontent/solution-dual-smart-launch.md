@@ -1,3 +1,5 @@
+The section enables applications to obtain authorization from multiple systems while maintaining appropriate user consent and security controls. It builds on existing SMART App Launch flows, executing them sequentially with contextual information passed between authorization requests.
+
 # Dual SMART Launch Specification
 
 ## Introduction
