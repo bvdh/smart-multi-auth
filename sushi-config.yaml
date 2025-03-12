@@ -107,6 +107,9 @@ contact:
       - system: email # phone | fax | email | pager | url | sms | other
         value: bas.van.den.heuvel@philips.com
         use: work
+  - name: Josh Mandel
+  - name: Michel Donnelly
+  - name: Rashid Kolaghassi
 
 # The global property corresponds to the IG.global property, but it
 # uses the type as the YAML key and the profile as its value. Since

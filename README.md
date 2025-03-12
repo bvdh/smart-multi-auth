@@ -4,7 +4,7 @@
 
 Refer to HL7 IG Publisher documentation. 
 
-This FHIR Implementation Guide is viewable at: https://build.fhir.org/ig/HL7/fhircast-docs/
+This FHIR Implementation Guide is viewable at: https://build.fhir.org/ig/bvdh/smart-multi-auth/solution-dual-smart-launch.html
 
 ## Contributing
 
