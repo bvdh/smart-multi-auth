@@ -29,14 +29,16 @@ Dual SMART Launch enables an application to obtain authorization from multiple s
 
 ```mermaid
 sequenceDiagram
-    participant App as Application
-    participant EHR as EHR System
-    participant IS as Imaging Server
-    
-    App->>EHR: GET [ehrFhirBaseUrl]/.well-known/smart-configuration
-    EHR-->>App: Configuration with associated_endpoints & capabilities
-    App->>IS: GET [imagingServerFhirBaseUrl]/.well-known/smart-configuration
-    IS-->>App: Configuration with smart-imaging-access-dual-launch capability
+    participant Browser
+    participant App
+    participant EHR
+    participant ImagingServer
+
+    Browser->>App: User initiates workflow
+    App->>EHR: Get .well-known/smart-configuration
+    EHR-->>App: Return configuration with associated_endpoints
+    App->>ImagingServer: Get .well-known/smart-configuration
+    ImagingServer-->>App: Return configuration with "smart-imaging-access-dual-launch"
 ```
 
 #### Narrative Explanation
@@ -72,16 +74,22 @@ It's important to note that at this stage, the application is simply discovering
 
 ```mermaid
 sequenceDiagram
-    participant App as Application
-    participant EHR as EHR System
+    participant Browser
+    participant App
+    participant EHR
+    participant ImagingServer
     
-    App->>EHR: Initiate SMART App Launch (with openid, fhirUser scopes)
-    EHR->>EHR: Authenticate user
-    EHR->>EHR: User authorization for EHR data
-    EHR-->>App: Authorization code
+    App->>Browser: Redirect to EHR authorization endpoint
+    Browser->>EHR: Authorization request with openid+fhirUser scopes
+    EHR->>Browser: Present login screen
+    Browser->>EHR: User provides credentials
+    EHR->>Browser: Display authorization consent
+    Browser->>EHR: User approves access
+    EHR->>Browser: Redirect to App with authorization code
+    Browser->>App: Follow redirect back to App, providing App with authorization code
     App->>EHR: Exchange code for tokens
-    EHR-->>App: Access token + OpenID id_token for EHR
-    App->>App: Store EHR tokens and context
+    EHR-->>App: Issue id_token & access_token to App and return EHR patient ID
+    App->>App: Preserve authorization state (tokens, context) and EHR patient ID
 ```
 
 #### Narrative Explanation
@@ -116,34 +124,33 @@ This phase follows standard SMART App Launch, but the request for OpenID scopes 
 
 ```mermaid
 sequenceDiagram
-    participant App as Application
-    participant EHR as EHR System
-    participant IS as Imaging Server
+    participant Browser
+    participant App
+    participant EHR
+    participant ImagingServer
     
-    App->>IS: Initiate SMART App Launch (with id_token in login_hint)
+    App->>Browser: Redirect to imaging server authorization endpoint
+    Browser->>ImagingServer: Auth request with EHR id_token as login_hint
+    ImagingServer->>EHR: Verify client registration from ehrClientDiscoveryEndpoint
+    ImagingServer->>Browser: Redirect to EHR authorize endpoint with id_token_hint & prompt=none
+    Browser->>EHR: Authorization request with id_token_hint & prompt=none
+    Note over Browser: Browser has session state for existing user session 
+    EHR->>EHR: Verify that logged-in user matches user in id_token_hint
+    EHR-->>Browser: Redirect to ImagingServer with authorization code
+    Browser->>ImagingServer: Follow redirect back to ImagingServer, providing ImagingServer with authorization code
+    ImagingServer->>EHR: Exchange code for token
+    EHR-->>ImagingServer: Issue id_token & access_token to ImagingServer 
     
-    rect rgb(240, 240, 255)
-    note right of IS: Embedded Workflow
-    IS->>IS: Verify client registration with EHR
-    IS->>EHR: GET [ehrClientDiscoveryEndpoint]/clients/[clientId]
-    EHR-->>IS: Client metadata (JWKS, redirect_uri)
-    IS->>EHR: Authorization request with id_token_hint & prompt=none
-    EHR->>EHR: Validate id_token_hint
-    EHR->>EHR: Auto-authorize based on existing session
-    EHR-->>IS: Access token + OpenID id_token for Imaging Server
-    end
+    ImagingServer->>EHR: Get FHIR Patient resource
+    EHR-->>ImagingServer: Return Patient resource
+    ImagingServer->>ImagingServer: In Patient resource, find ID known by ImagingServer
     
-    IS->>IS: Implement authorization policy
-    alt EHR-Integrated Policy
-        IS->>EHR: GET /ImagingStudy?patient=X (using EHR token)
-        EHR-->>IS: Accessible imaging studies
-    else Independent Policy
-        IS->>IS: Apply local access policy
-    end
-    IS->>IS: User authorization for imaging data
-    IS-->>App: Authorization code
-    App->>IS: Exchange code for tokens
-    IS-->>App: Access token for Imaging Server
+    ImagingServer->>Browser: Display imaging authorization consent
+    Browser->>ImagingServer: User approves access
+    ImagingServer->>Browser: Redirect to app with authorization code
+    Browser->>App: Follow redirect back to App, providing App with authorization code
+    App->>ImagingServer: Exchange code for token
+    ImagingServer-->>App: Issue imaging access_token and return ImagingServer patient ID
 ```
 
 #### Narrative Explanation
@@ -214,14 +221,14 @@ This phase elegantly solves the problem of requiring multiple authentications wh
 
 ```mermaid
 sequenceDiagram
-    participant App as Application
-    participant EHR as EHR System
-    participant IS as Imaging Server
+    participant Browser
+    participant App
+    participant EHR
+    participant ImagingServer
     
-    App->>EHR: Access EHR resources (using EHR token)
-    EHR-->>App: EHR resource data
-    App->>IS: Access imaging resources (using Imaging Server token)
-    IS-->>App: Imaging resource data
+    App->>EHR: Access clinical data with EHR access token
+    App->>ImagingServer: Access imaging data with ImagingServer access token
+    App->>Browser: Display combined clinical and imaging data
 ```
 
 #### Narrative Explanation
