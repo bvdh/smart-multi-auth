@@ -274,6 +274,19 @@ The application can now provide an integrated view of both clinical and imaging 
    - Imaging resources using the imaging server-issued access token
 2. Each system maintains independent access control and token validation.
 
+#### Unresolved Issues
+
+The imaging server has a challenge in determining which data to share with the patient.  A non-exhaustive set of options includes:
+1. The imaging server could assume that any images with the patient as its subject is appropriate to share with that patient.  
+2. When the imaging server gets the patient's consent to share data with the application, the imaging server could first retrieve a set of ImagingStudy resources from the EHR and let the patient select specific studies to share with the application.
+3. When the application requests an image from the imaging server, the imaging server could, at least in theory, first retrieve the corresponding ImagingStudy resource from the EHR.  If the access token the EHR issued to the imaging server has the right scope and context, the EHR can use its likely greater context about the patient and their data to determine whether to share the resource, and the imaging server can piggyback off of the EHR's authorization mechanism. 
+
+All of these have flaws.  Ideally we want a solution where:
+- The patient can always get all images to which they should have access. 
+- The patient can never get any image to which they should not have access.  
+
+Bear in mind also that the user and the patient could be different people if the EHR has a concept of a proxy user.  A user might be a patient's parent, partner, or adult caretaker who has been granted full or partial access to the patient's data in the EHR.  
+
 ## Implementation Requirements
 
 ### EHR Requirements
