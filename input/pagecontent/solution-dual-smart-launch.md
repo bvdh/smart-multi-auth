@@ -39,14 +39,14 @@ Prior to the technical flow the following will be done out-of-band:
 sequenceDiagram
     participant Browser
     participant App as Application
-    participant EHR
-    participant ImagingServer as Imaging Server
+    participant EHR as EHR System
+    participant IS as Imaging Server
 
     Browser->>App: User initiates workflow
     App->>EHR: GET [ehrFhirBaseUrl]/.well-known/smart-configuration
     EHR-->>App: Configuration with associated_endpoints & capabilities
-    App->>ImagingServer: GET [imagingServerFhirBaseUrl]/.well-known/smart-configuration
-    ImagingServer-->>App: Configuration with smart-imaging-access-dual-launch capability
+    App->>IS: GET [imagingServerFhirBaseUrl]/.well-known/smart-configuration
+    IS-->>App: Configuration with smart-imaging-access-dual-launch capability
 ```
 
 #### Narrative Explanation
@@ -84,7 +84,7 @@ It's important to note that at this stage, the application is simply discovering
 sequenceDiagram
     participant Browser
     participant App as Application
-    participant EHR
+    participant EHR as EHR System
     
     App->>Browser: Redirect to EHR authorization endpoint
     Browser->>EHR: Authorization request with openid+fhirUser scopes
@@ -133,32 +133,32 @@ This phase follows standard SMART App Launch, but the request for OpenID scopes 
 sequenceDiagram
     participant Browser
     participant App as Application
-    participant EHR
-    participant ImagingServer as Imaging Server
+    participant EHR as EHR System
+    participant IS as Imaging Server
     
     App->>Browser: Redirect to imaging server authorization endpoint
-    Browser->>ImagingServer: Auth request with EHR id_token as login_hint
-    ImagingServer->>EHR: GET [ehrClientDiscoveryEndpoint]/clients/[clientId]
-    EHR-->>ImagingServer: Client metadata (client_name, JWKS, redirect_uri)
-    ImagingServer->>Browser: Redirect to EHR authorize endpoint with id_token_hint & prompt=none
+    Browser->>IS: Auth request with EHR id_token as login_hint
+    IS->>EHR: GET [ehrClientDiscoveryEndpoint]/clients/[clientId]
+    EHR-->>IS: Client metadata (client_name, JWKS, redirect_uri)
+    IS->>Browser: Redirect to EHR authorize endpoint with id_token_hint & prompt=none
     Browser->>EHR: Authorization request with id_token_hint & prompt=none
     Note over Browser: Browser has session state for existing user session 
     EHR->>EHR: Verify that logged-in user matches user in id_token_hint
-    EHR-->>Browser: Redirect to ImagingServer with authorization code
-    Browser->>ImagingServer: Follow redirect back to ImagingServer, providing ImagingServer with authorization code
-    ImagingServer->>EHR: Exchange code for tokens
-    EHR-->>ImagingServer: Issue id_token & access_token to ImagingServer 
+    EHR-->>Browser: Redirect to IS with authorization code
+    Browser->>IS: Follow redirect back to IS, providing IS with authorization code
+    IS->>EHR: Exchange code for tokens
+    EHR-->>IS: Issue id_token & access_token to IS 
     
-    ImagingServer->>EHR: Get FHIR Patient resource
-    EHR-->>ImagingServer: Return Patient resource
-    ImagingServer->>ImagingServer: In Patient resource, find ID known by ImagingServer
+    IS->>EHR: Get FHIR Patient resource
+    EHR-->>IS: Return Patient resource
+    IS->>IS: In Patient resource, find ID known by IS
     
-    ImagingServer->>Browser: Display imaging authorization consent
-    Browser->>ImagingServer: User approves access
-    ImagingServer->>Browser: Redirect to app with authorization code
+    IS->>Browser: Display imaging authorization consent
+    Browser->>IS: User approves access
+    IS->>Browser: Redirect to app with authorization code
     Browser->>App: Follow redirect back to App, providing App with authorization code
-    App->>ImagingServer: Exchange code for token
-    ImagingServer-->>App: Issue imaging access_token and return ImagingServer patient ID
+    App->>IS: Exchange code for token
+    IS-->>App: Issue imaging access_token and return IS patient ID
 ```
 
 #### Narrative Explanation
@@ -231,11 +231,11 @@ This phase elegantly solves the problem of requiring multiple authentications wh
 sequenceDiagram
     participant Browser
     participant App as Application
-    participant EHR
-    participant ImagingServer as Imaging Server
+    participant EHR as EHR System
+    participant IS as Imaging Server
     
     App->>EHR: Access clinical data using EHR access token
-    App->>ImagingServer: Access imaging data using ImagingServer access token
+    App->>IS: Access imaging data using IS access token
     App->>Browser: Display combined clinical and imaging data
 ```
 
