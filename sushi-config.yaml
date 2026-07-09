@@ -108,8 +108,11 @@ contact:
         value: bas.van.den.heuvel@philips.com
         use: work
   - name: Josh Mandel
+    telecom: []
   - name: Michel Donnelly
+    telecom: []
   - name: Rashid Kolaghassi
+    telecom: []
 
 # The global property corresponds to the IG.global property, but it
 # uses the type as the YAML key and the profile as its value. Since
